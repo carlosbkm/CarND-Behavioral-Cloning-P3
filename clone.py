@@ -20,16 +20,38 @@ with open(os.curdir + os.path.sep + 'data' + os.path.sep + 'driving_log.csv') as
 images = []
 measurements = []
 for line in lines:
-  source_path = line[0]
-  filename = source_path.split(file_separator)[-1]
-  current_path = os.curdir + os.path.sep + 'data' + os.path.sep + 'IMG' + os.path.sep + filename
+  steering_center = float(line[3])
+
+  # create adjusted steering measurements for the side camera images
+  correction = 0.2 # this is a parameter to tune
+  steering_left = steering_center + correction
+  steering_right = steering_center - correction
+
+  source_path_center = line[0]
+  source_path_left = line[1]
+  source_path_right = line[2]
+
+  filename_center = source_path_center.split(file_separator)[-1]
+  filename_left = source_path_left.split(file_separator)[-1]
+  filename_right = source_path_right.split(file_separator)[-1]
+
+  current_path_center = os.curdir + os.path.sep + 'data' + os.path.sep + 'IMG' + os.path.sep + filename_center
+  current_path_left = os.curdir + os.path.sep + 'data' + os.path.sep + 'IMG' + os.path.sep + filename_left
+  current_path_right = os.curdir + os.path.sep + 'data' + os.path.sep + 'IMG' + os.path.sep + filename_right
   #with open('paths.log', 'a') as myfile:
   #  myfile.write(current_path)
   #  myfile.write('\n')
-  image = cv2.imread(current_path)
-  images.append(image)
-  measurement = float(line[3])
-  measurements.append(measurement)
+  image_center = cv2.imread(current_path_center)
+  image_left = cv2.imread(current_path_left)
+  image_right = cv2.imread(current_path_right)
+
+  images.append(image_center)
+  images.append(image_left)
+  images.append(image_right)
+
+  measurements.append(steering_center)
+  measurements.append(steering_left)
+  measurements.append(steering_right)
 
 augmented_images, augmented_measurements = [], []
 for image, measurement in zip(images, measurements):
