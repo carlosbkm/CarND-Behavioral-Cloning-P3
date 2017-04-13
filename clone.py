@@ -4,18 +4,27 @@ import os
 import sys
 import numpy as np
 
-lines = []
+def extract_actual_path (path, separator):
+  filename = path.split(separator)[-1]
+  return os.curdir + os.path.sep + 'data' + os.path.sep + 'IMG' + os.path.sep + filename
 
-file_separator = "/"
-if (len(sys.argv) > 1 and sys.argv[1] and sys.argv[1] == 'win') :
-  file_separator = "\\"
+def get_lines_from_csv(csv_file):
+  lines = []
+  with open(os.curdir + os.path.sep + 'data' + os.path.sep + csv_file) as csvfile:
+    reader = csv.reader(csvfile)
+    for line in reader:
+      lines.append(line)
+  return lines
 
-print('file separator :', file_separator)
+def get_path_separator ():
+  path_separator = "/"
+  if (len(sys.argv) > 1 and sys.argv[1] and sys.argv[1] == 'win') :
+    path_separator = "\\"
+  print('file separator :', path_separator)
+  return path_separator
 
-with open(os.curdir + os.path.sep + 'data' + os.path.sep + 'driving_log.csv') as csvfile:
-  reader = csv.reader(csvfile)
-  for line in reader:
-    lines.append(line)
+lines = get_lines_from_csv('driving_log.csv')
+file_separator = get_path_separator()
 
 images = []
 measurements = []
@@ -27,23 +36,9 @@ for line in lines:
   steering_left = steering_center + correction
   steering_right = steering_center - correction
 
-  source_path_center = line[0]
-  source_path_left = line[1]
-  source_path_right = line[2]
-
-  filename_center = source_path_center.split(file_separator)[-1]
-  filename_left = source_path_left.split(file_separator)[-1]
-  filename_right = source_path_right.split(file_separator)[-1]
-
-  current_path_center = os.curdir + os.path.sep + 'data' + os.path.sep + 'IMG' + os.path.sep + filename_center
-  current_path_left = os.curdir + os.path.sep + 'data' + os.path.sep + 'IMG' + os.path.sep + filename_left
-  current_path_right = os.curdir + os.path.sep + 'data' + os.path.sep + 'IMG' + os.path.sep + filename_right
-  #with open('paths.log', 'a') as myfile:
-  #  myfile.write(current_path)
-  #  myfile.write('\n')
-  image_center = cv2.imread(current_path_center)
-  image_left = cv2.imread(current_path_left)
-  image_right = cv2.imread(current_path_right)
+  image_center = cv2.imread(extract_actual_path(line[0], file_separator))
+  image_left = cv2.imread(extract_actual_path(line[1], file_separator))
+  image_right = cv2.imread(extract_actual_path(line[2], file_separator))
 
   images.append(image_center)
   images.append(image_left)
