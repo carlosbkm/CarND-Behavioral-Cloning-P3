@@ -6,9 +6,9 @@ import numpy as np
 
 lines = []
 
-file_separator = '/'
-if(len(sys.argv) > 1 and sys.argv[1]):
-  file_separator = sys.argv[1]
+file_separator = "/"
+if (len(sys.argv) > 1 and sys.argv[1] and sys.argv[1] == 'win') :
+  file_separator = "\\"
 
 print('file separator :', file_separator)
 
