@@ -3,6 +3,8 @@ import cv2
 import os
 import sys
 import numpy as np
+import sklearn
+from sklearn.model_selection import train_test_split
 
 def extract_actual_path (path, separator):
   filename = path.split(separator)[-1]
@@ -20,7 +22,6 @@ def get_path_separator ():
   path_separator = "/"
   if (len(sys.argv) > 1 and sys.argv[1] and sys.argv[1] == 'win') :
     path_separator = "\\"
-  print('file separator :', path_separator)
   return path_separator
 
 def get_augmented_data (images, angles):
@@ -32,7 +33,7 @@ def get_augmented_data (images, angles):
 
 def get_data_from_csv_rows(rows):
   images, angles = [], []
-  i = 0
+  path_separator = get_path_separator()
   for row in rows:
     steering_center = float(row[3])
 
@@ -41,9 +42,9 @@ def get_data_from_csv_rows(rows):
     steering_left = steering_center + correction
     steering_right = steering_center - correction
 
-    image_center = cv2.imread(extract_actual_path(row[0], file_separator))
-    image_left = cv2.imread(extract_actual_path(row[1], file_separator))
-    image_right = cv2.imread(extract_actual_path(row[2], file_separator))
+    image_center = cv2.imread(extract_actual_path(row[0], path_separator))
+    image_left = cv2.imread(extract_actual_path(row[1], path_separator))
+    image_right = cv2.imread(extract_actual_path(row[2], path_separator))
 
     images.append(image_center)
     images.append(image_left)
@@ -55,17 +56,29 @@ def get_data_from_csv_rows(rows):
 
   return images, angles
 
-lines = get_lines_from_csv('driving_log.csv')
-file_separator = get_path_separator()
-images, angles = get_data_from_csv_rows(lines)
-augmented_images, augmented_angles = get_augmented_data(images, angles)
-images.extend(augmented_images)
-angles.extend(augmented_angles)
+def generator(samples, batch_size=32):
+  num_samples = len(samples)
+  while 1:
+    for offset in range(0, num_samples, batch_size):
+      batch_samples = samples[offset:offset + batch_size]
 
-from sklearn.utils import shuffle
+      images, angles = get_data_from_csv_rows(batch_samples)
+      augmented_images, augmented_angles = get_augmented_data(images, angles)
+      images.extend(augmented_images)
+      angles.extend(augmented_angles)
 
-X_train = np.array(shuffle(images))
-y_train = np.array(shuffle(angles))
+      X_train = np.array(images)
+      y_train = np.array(angles)
+      yield sklearn.utils.shuffle(X_train, y_train)
+
+# ------------------------------------------------------------------------------
+# ------------------- Start the pipeline here ---------------------------------
+samples = get_lines_from_csv('driving_log.csv')
+train_samples, validation_samples = train_test_split(samples, test_size=0.2)
+
+# compile and train the model using the generator function
+train_generator = generator(train_samples, batch_size=32)
+validation_generator = generator(validation_samples, batch_size=32)
 
 from keras.models import Sequential
 from keras.layers import Flatten, Dense, Lambda
@@ -85,7 +98,10 @@ model.add(Dense(84))
 model.add(Dense(1))
 
 model.compile(loss='mse', optimizer='adam')
-model.fit(X_train, y_train, validation_split=0.2, shuffle=True, epochs=3)
+model.fit_generator(train_generator, steps_per_epoch = len(train_samples), validation_data=validation_generator,
+                    validation_steps=len(validation_samples), epochs=3)
 
-model.save('model.h5')
+#model.fit_generator(train_generator, samples_per_epoch=len(train_samples), validation_data=validation_generator, nb_val_samples=len(validation_samples), nb_epoch=3)
+
+model.save('model_generator.h5')
 
