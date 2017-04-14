@@ -2,6 +2,7 @@ import csv
 import cv2
 import os
 import sys
+from random import randint
 import numpy as np
 import sklearn
 from sklearn.model_selection import train_test_split
@@ -56,16 +57,49 @@ def get_data_from_csv_rows(rows):
 
   return images, angles
 
+def get_data_from_batch (samples):
+  path_separator = get_path_separator()
+  chosen_images, chosen_angles = [], []
+  for row in samples:
+    steering_center = float(row[3])
+
+    # create adjusted steering angles for the side camera images
+    correction = 0.2 # this is a parameter to tune
+    steering_left = steering_center + correction
+    steering_right = steering_center - correction
+
+    images = []
+    image_center = cv2.imread(extract_actual_path(row[0], path_separator))
+    image_left = cv2.imread(extract_actual_path(row[1], path_separator))
+    image_right = cv2.imread(extract_actual_path(row[2], path_separator))
+    image_center_augmented =  cv2.flip(image_center, 1)
+    image_left_augmented =  cv2.flip(image_left, 1)
+    image_right_augmented =  cv2.flip(image_right, 1)
+    angle_center_augmented = (steering_center*-1.0)
+    angle_left_augmented = (steering_left*-1.0)
+    angle_right_augmented = (steering_right*-1.0)
+
+    images.append((image_center, steering_center))
+    images.append((image_left, steering_left))
+    images.append((image_right, steering_right))
+    images.append((image_center_augmented, angle_center_augmented))
+    images.append((image_left_augmented, angle_left_augmented))
+    images.append((image_right_augmented, angle_right_augmented))
+
+    chosen_tuple = images[randint(0, len(images) - 1)]
+    chosen_images.append(chosen_tuple[0])
+    chosen_angles.append(chosen_tuple[1])
+  return chosen_images, chosen_angles
+
+
+
 def generator(samples, batch_size=32):
   num_samples = len(samples)
   while 1:
     for offset in range(0, num_samples, batch_size):
       batch_samples = samples[offset:offset + batch_size]
 
-      images, angles = get_data_from_csv_rows(batch_samples)
-      augmented_images, augmented_angles = get_augmented_data(images, angles)
-      images.extend(augmented_images)
-      angles.extend(augmented_angles)
+      images, angles = get_data_from_batch(batch_samples)
 
       X_train = np.array(images)
       y_train = np.array(angles)
@@ -98,8 +132,8 @@ model.add(Dense(84))
 model.add(Dense(1))
 
 model.compile(loss='mse', optimizer='adam')
-model.fit_generator(train_generator, steps_per_epoch = len(train_samples), validation_data=validation_generator,
-                    validation_steps=len(validation_samples), epochs=3)
+model.fit_generator(train_generator, steps_per_epoch = 10036, validation_data=validation_generator,
+                    validation_steps=2510, epochs=3)
 
 #model.fit_generator(train_generator, samples_per_epoch=len(train_samples), validation_data=validation_generator, nb_val_samples=len(validation_samples), nb_epoch=3)
 
