@@ -6,6 +6,7 @@ from random import randint
 import numpy as np
 import sklearn
 from sklearn.model_selection import train_test_split
+from keras.preprocessing.image import ImageDataGenerator
 
 def extract_actual_path (path, separator):
   filename = path.split(separator)[-1]
@@ -91,7 +92,15 @@ def get_data_from_batch (samples):
     chosen_angles.append(chosen_tuple[1])
   return chosen_images, chosen_angles
 
-
+def simple_get_data(samples):
+  path_separator = get_path_separator()
+  images, angles = [],[]
+  for row in samples:
+    angle = float(row[3])
+    image = cv2.imread(extract_actual_path(row[0], path_separator))
+    images.append(image)
+    angles.append(angle)
+  return images, angles
 
 def generator(samples, batch_size=32):
   num_samples = len(samples)
@@ -99,7 +108,8 @@ def generator(samples, batch_size=32):
     for offset in range(0, num_samples, batch_size):
       batch_samples = samples[offset:offset + batch_size]
 
-      images, angles = get_data_from_batch(batch_samples)
+      #images, angles = get_data_from_batch(batch_samples)
+      images, angles = simple_get_data(batch_samples)
 
       X_train = np.array(images)
       y_train = np.array(angles)
@@ -107,21 +117,32 @@ def generator(samples, batch_size=32):
 
 # ------------------------------------------------------------------------------
 # ------------------- Start the pipeline here ---------------------------------
+height, width, channels = 160, 320, 3
+rescale = .4
 samples = get_lines_from_csv('driving_log.csv')
 train_samples, validation_samples = train_test_split(samples, test_size=0.2)
 
+im_train, ang_train = simple_get_data(train_samples)
+im_val, ang_val = simple_get_data(validation_samples)
+X_train, y_train = np.array(im_train), np.array(ang_train)
+X_val, y_val = np.array(im_val), np.array(ang_val)
+
+train_datagen = ImageDataGenerator(horizontal_flip=True)
+val_datagen = ImageDataGenerator(horizontal_flip=True)
+
 # compile and train the model using the generator function
-train_generator = generator(train_samples, batch_size=32)
-validation_generator = generator(validation_samples, batch_size=32)
+#train_generator = generator(train_samples, batch_size=32)
+#validation_generator = generator(validation_samples, batch_size=32)
 
 from keras.models import Sequential
 from keras.layers import Flatten, Dense, Lambda
 from keras.layers.convolutional import Conv2D, Cropping2D
 from keras.layers.pooling import MaxPooling2D
 
+
 model = Sequential()
-model.add(Cropping2D(cropping=((50,20), (0,0)), input_shape=(160,320,3)))
-model.add(Lambda(lambda x: x / 255.0 - 0.5, input_shape=(160,320,3)))
+model.add(Cropping2D(cropping=((50,20), (0,0)), input_shape=(height,width,channels)))
+model.add(Lambda(lambda x: x / 255.0 - 0.5, input_shape=(height,width,channels)))
 model.add(Conv2D(6, (5, 5), activation="relu"))
 model.add(MaxPooling2D())
 model.add(Conv2D(6, (5, 5), activation="relu"))
@@ -132,8 +153,11 @@ model.add(Dense(84))
 model.add(Dense(1))
 
 model.compile(loss='mse', optimizer='adam')
-model.fit_generator(train_generator, steps_per_epoch = 10036, validation_data=validation_generator,
-                    validation_steps=2510, epochs=3)
+
+# model.fit_generator(train_generator, steps_per_epoch = len(train_samples), validation_data=validation_generator,
+#                     validation_steps=len(validation_samples), epochs=3)
+model.fit_generator(train_datagen.flow(X_train, y_train, batch_size=32), steps_per_epoch = len(X_train)/32, validation_data=val_datagen.flow(X_val, y_val, batch_size=32),
+                    validation_steps=len(X_val)/32, epochs=3)
 
 #model.fit_generator(train_generator, samples_per_epoch=len(train_samples), validation_data=validation_generator, nb_val_samples=len(validation_samples), nb_epoch=3)
 
