@@ -122,18 +122,19 @@ from keras.layers.pooling import MaxPooling2D
 model = Sequential()
 model.add(Cropping2D(cropping=((50,20), (0,0)), input_shape=(160,320,3)))
 model.add(Lambda(lambda x: x / 255.0 - 0.5, input_shape=(160,320,3)))
-model.add(Conv2D(6, (5, 5), activation="relu"))
-model.add(MaxPooling2D())
-model.add(Conv2D(6, (5, 5), activation="relu"))
-model.add(MaxPooling2D())
+model.add(Conv2D(24, (5, 5), activation="relu", strides=(2, 2)))
+model.add(Conv2D(36, (5, 5), activation="relu", strides=(2, 2)))
+model.add(Conv2D(48, (5, 5), activation="relu", strides=(2, 2)))
+model.add(Conv2D(64, (3, 3), activation="relu"))
+model.add(Conv2D(64, (3, 3), activation="relu"))
 model.add(Flatten())
-model.add(Dense(120))
-model.add(Dense(84))
+model.add(Dense(100))
+model.add(Dense(50))
 model.add(Dense(1))
 
 model.compile(loss='mse', optimizer='adam')
-model.fit_generator(train_generator, steps_per_epoch = len(train_samples)//16, validation_data=validation_generator,
-                    validation_steps=len(validation_samples)//16, epochs=4)
+model.fit_generator(train_generator, steps_per_epoch = len(train_samples)//32, validation_data=validation_generator,
+                    validation_steps=len(validation_samples)//32, epochs=3)
 
 #model.fit_generator(train_generator, samples_per_epoch=len(train_samples), validation_data=validation_generator, nb_val_samples=len(validation_samples), nb_epoch=3)
 
