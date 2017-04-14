@@ -1,10 +1,9 @@
 # User created ignore
 data/
 data_old/
-*.h5
 *.log
 *.bak
-model.h5
+*.zip
 
 
 # Created by https://www.gitignore.io/api/macos,pycharm,windows
