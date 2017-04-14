@@ -5,6 +5,7 @@ data_old/
 *.log
 *.bak
 model.h5
+*.zip
 
 
 # Created by https://www.gitignore.io/api/macos,pycharm,windows
