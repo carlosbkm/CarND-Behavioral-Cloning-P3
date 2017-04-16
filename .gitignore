@@ -4,6 +4,7 @@ data_old/
 *.log
 *.bak
 *.zip
+*.sh
 
 
 # Created by https://www.gitignore.io/api/macos,pycharm,windows
