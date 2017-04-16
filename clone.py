@@ -25,38 +25,6 @@ def get_path_separator ():
     path_separator = "\\"
   return path_separator
 
-def get_augmented_data (images, angles):
-  augmented_images, augmented_angles = [], []
-  for image, angle in zip(images, angles):
-    augmented_images.append(cv2.flip(image, 1))
-    augmented_angles.append(angle*-1.0)
-  return augmented_images, augmented_angles
-
-def get_data_from_csv_rows(rows):
-  images, angles = [], []
-  path_separator = get_path_separator()
-  for row in rows:
-    steering_center = float(row[3])
-
-    # create adjusted steering angles for the side camera images
-    correction = 0.2 # this is a parameter to tune
-    steering_left = steering_center + correction
-    steering_right = steering_center - correction
-
-    image_center = cv2.imread(extract_actual_path(row[0], path_separator))
-    image_left = cv2.imread(extract_actual_path(row[1], path_separator))
-    image_right = cv2.imread(extract_actual_path(row[2], path_separator))
-
-    images.append(image_center)
-    images.append(image_left)
-    images.append(image_right)
-
-    angles.append(steering_center)
-    angles.append(steering_left)
-    angles.append(steering_right)
-
-  return images, angles
-
 def get_data_from_batch (samples):
   path_separator = get_path_separator()
   chosen_images, chosen_angles = [], []
@@ -69,16 +37,21 @@ def get_data_from_batch (samples):
     steering_right = steering_center - correction
 
     images = []
+    # Take image from center, left and right camera
     image_center = cv2.imread(extract_actual_path(row[0], path_separator))
     image_left = cv2.imread(extract_actual_path(row[1], path_separator))
     image_right = cv2.imread(extract_actual_path(row[2], path_separator))
+
+    # Augment images by flipping horizontally
     image_center_augmented =  cv2.flip(image_center, 1)
     image_left_augmented =  cv2.flip(image_left, 1)
     image_right_augmented =  cv2.flip(image_right, 1)
+    # Modify steering angle for augmented images
     angle_center_augmented = (steering_center*-1.0)
     angle_left_augmented = (steering_left*-1.0)
     angle_right_augmented = (steering_right*-1.0)
 
+    # Add all 6 images (normal and augmented) to an array
     images.append((image_center, steering_center))
     images.append((image_left, steering_left))
     images.append((image_right, steering_right))
@@ -86,12 +59,12 @@ def get_data_from_batch (samples):
     images.append((image_left_augmented, angle_left_augmented))
     images.append((image_right_augmented, angle_right_augmented))
 
+    # Choose only 1 from image from the 6 possible in the array
     chosen_tuple = images[randint(0, len(images) - 1)]
     chosen_images.append(chosen_tuple[0])
     chosen_angles.append(chosen_tuple[1])
+
   return chosen_images, chosen_angles
-
-
 
 def generator(samples, batch_size=32):
   num_samples = len(samples)
@@ -117,7 +90,6 @@ validation_generator = generator(validation_samples, batch_size=32)
 from keras.models import Sequential
 from keras.layers import Flatten, Dense, Lambda
 from keras.layers.convolutional import Conv2D, Cropping2D
-from keras.layers.pooling import MaxPooling2D
 
 model = Sequential()
 model.add(Cropping2D(cropping=((50,20), (0,0)), input_shape=(160,320,3)))
@@ -136,7 +108,6 @@ model.compile(loss='mse', optimizer='adam')
 model.fit_generator(train_generator, steps_per_epoch = len(train_samples)//32, validation_data=validation_generator,
                     validation_steps=len(validation_samples)//32, epochs=3)
 
-#model.fit_generator(train_generator, samples_per_epoch=len(train_samples), validation_data=validation_generator, nb_val_samples=len(validation_samples), nb_epoch=3)
 
-model.save('model_generator.h5')
+model.save('model.h5')
 
