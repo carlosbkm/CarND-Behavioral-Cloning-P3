@@ -20,7 +20,9 @@ def get_lines_from_csv(csv_file):
   return lines
 
 def get_path_separator ():
+  # Set path separator dependin on the OS (windows or other)
   path_separator = "/"
+  # If "win" was passed as a parameter, we set the path separator for Windows
   if (len(sys.argv) > 1 and sys.argv[1] and sys.argv[1] == 'win') :
     path_separator = "\\"
   return path_separator
