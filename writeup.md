@@ -16,16 +16,6 @@ The goals / steps of this project are the following:
 * Summarize the results with a written report
 
 
-[//]: # (Image References)
-
-[image1]: ./examples/placeholder.png "Model Visualization"
-[image2]: ./examples/placeholder.png "Grayscaling"
-[image3]: ./examples/placeholder_small.png "Recovery Image"
-[image4]: ./examples/placeholder_small.png "Recovery Image"
-[image5]: ./examples/placeholder_small.png "Recovery Image"
-[image6]: ./examples/placeholder_small.png "Normal Image"
-[image7]: ./examples/placeholder_small.png "Flipped Image"
-
 ## Rubric Points
 ###Here I will consider the [rubric points](https://review.udacity.com/#!/rubrics/432/view) individually and describe how I addressed each point in my implementation.  
 
@@ -118,7 +108,7 @@ The final model architecture (clone.py lines 96-107) consisted of a convolution 
 
 The NVIDIA architecture which it was based in can be seen in the picture below:
 
-![alt text][image1]
+<img src="https://cloud.githubusercontent.com/assets/4292837/25099021/01d83b38-23ab-11e7-8a3d-5ac91ec993ad.png" alt="NVIDIA architecture">
 
 ####3. Creation of the Training Set & Training Process
 
