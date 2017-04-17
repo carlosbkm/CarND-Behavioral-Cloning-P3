@@ -94,8 +94,8 @@ from keras.layers import Flatten, Dense, Lambda
 from keras.layers.convolutional import Conv2D, Cropping2D
 
 model = Sequential()
-model.add(Cropping2D(cropping=((50,20), (0,0)), input_shape=(160,320,3)))
 model.add(Lambda(lambda x: x / 255.0 - 0.5, input_shape=(160,320,3)))
+model.add(Cropping2D(cropping=((50,20), (0,0)), input_shape=(160,320,3)))
 model.add(Conv2D(24, (5, 5), activation="relu", strides=(2, 2)))
 model.add(Conv2D(36, (5, 5), activation="relu", strides=(2, 2)))
 model.add(Conv2D(48, (5, 5), activation="relu", strides=(2, 2)))
