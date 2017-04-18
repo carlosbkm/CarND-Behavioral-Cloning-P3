@@ -96,6 +96,10 @@ ls run1
 
 The image file name is a timestamp when the image image was seen. This information is used by `video.py` to create a chronological video of the agent driving.
 
+This is how autonomous driving looks like when you run drive.py with the trained model:
+
+<img src="https://cloud.githubusercontent.com/assets/4292837/25123110/92f692d2-2427-11e7-932b-56828df2f9e1.png" alt="Autonomous driving screenshot">
+
 ### `video.py`
 
 ```sh
